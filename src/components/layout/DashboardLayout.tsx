@@ -5,13 +5,15 @@ import { useWorkspace } from '@/providers/WorkspaceProvider'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
-import { LayoutDashboard, Megaphone, ChartBar as BarChart3, Settings, User, LogOut, Menu, X, Building2, ChevronDown, Plus, Users } from 'lucide-react'
+import { LayoutDashboard, Megaphone, ChartBar as BarChart3, Settings, User, LogOut, Menu, X, Building2, ChevronDown, Plus, Users, Sparkles, Activity } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ad Accounts', href: '/ad-accounts', icon: Building2 },
   { name: 'Campaigns', href: '/campaigns', icon: Megaphone },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'AI Insights', href: '/insights', icon: Sparkles },
+  { name: 'Health Score', href: '/health', icon: Activity },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
