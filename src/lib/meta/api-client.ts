@@ -214,10 +214,10 @@ export class MetaAPIClient {
     let hasMore = true
 
     while (hasMore && nextUrl) {
-      const response = await this.request<{
+      const response: {
         data: T[]
         paging?: { next?: string; cursors?: { after?: string } }
-      }>(nextUrl, {
+      } = await this.request(nextUrl, {
         params: { ...params, limit }
       })
 
