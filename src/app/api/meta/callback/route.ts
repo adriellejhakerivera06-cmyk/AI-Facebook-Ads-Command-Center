@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { redirect } from 'next/navigation'
 
 export async function GET(request: Request) {
   const supabase = await createClient()
@@ -11,14 +10,23 @@ export async function GET(request: Request) {
   const error = searchParams.get('error')
   const errorDescription = searchParams.get('error_description')
 
-  // Handle OAuth errors
+  // Build redirect URL with parameters
+  const buildRedirect = (params: Record<string, string>) => {
+    const url = new URL('/meta/callback', request.url)
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, value)
+    })
+    return NextResponse.redirect(url)
+  }
+
+  // Handle OAuth errors from Facebook
   if (error) {
     console.error('OAuth error:', error, errorDescription)
-    return redirect(`/settings/workspace?error=${encodeURIComponent(errorDescription || error)}`)
+    return buildRedirect({ error: errorDescription || error })
   }
 
   if (!code || !state) {
-    return redirect('/settings/workspace?error=Missing OAuth parameters')
+    return buildRedirect({ error: 'Missing OAuth parameters' })
   }
 
   // Decode and verify state
@@ -28,16 +36,16 @@ export async function GET(request: Request) {
     
     // Check if state is not too old (15 minutes)
     if (Date.now() - stateData.timestamp > 15 * 60 * 1000) {
-      return redirect('/settings/workspace?error=OAuth state expired')
+      return buildRedirect({ error: 'OAuth state expired' })
     }
   } catch (e) {
-    return redirect('/settings/workspace?error=Invalid OAuth state')
+    return buildRedirect({ error: 'Invalid OAuth state' })
   }
 
   const { data: { user }, error: authError } = await supabase.auth.getUser()
 
   if (authError || !user || user.id !== stateData.user_id) {
-    return redirect('/login?error=Unauthorized')
+    return buildRedirect({ error: 'Unauthorized' })
   }
 
   // Exchange code for access token
@@ -46,7 +54,7 @@ export async function GET(request: Request) {
   const redirectUri = process.env.FACEBOOK_REDIRECT_URI
 
   if (!facebookAppId || !facebookAppSecret || !redirectUri) {
-    return redirect('/settings/workspace?error=Facebook app not configured')
+    return buildRedirect({ error: 'Facebook app not configured' })
   }
 
   try {
@@ -118,11 +126,11 @@ export async function GET(request: Request) {
       throw new Error('Failed to save connection')
     }
 
-    // Redirect back to settings with success
-    return redirect('/settings/workspace?success=Meta account connected successfully')
+    // Redirect to callback page with success
+    return buildRedirect({ success: 'true', name: meData.name })
     
   } catch (error: any) {
     console.error('OAuth callback error:', error)
-    return redirect(`/settings/workspace?error=${encodeURIComponent(error.message || 'Failed to connect Meta account')}`)
+    return buildRedirect({ error: error.message || 'Failed to connect Meta account' })
   }
 }
