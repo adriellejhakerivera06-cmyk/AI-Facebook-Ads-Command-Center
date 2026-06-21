@@ -181,6 +181,82 @@ export interface Database {
           created_at?: string
         }
       }
+      campaign_alerts: {
+        Row: {
+          id: string
+          campaign_id: string
+          workspace_id: string
+          alert_type: string
+          severity: string
+          title: string
+          message: string
+          metric_name: string | null
+          metric_value: number | null
+          threshold_value: number | null
+          previous_value: number | null
+          status: string
+          resolved_at: string | null
+          dismissed_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          campaign_id: string
+          workspace_id: string
+          alert_type: string
+          severity: string
+          title: string
+          message: string
+          metric_name?: string | null
+          metric_value?: number | null
+          threshold_value?: number | null
+          previous_value?: number | null
+          status?: string
+          resolved_at?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          campaign_id?: string
+          workspace_id?: string
+          alert_type?: string
+          severity?: string
+          title?: string
+          message?: string
+          metric_name?: string | null
+          metric_value?: number | null
+          threshold_value?: number | null
+          previous_value?: number | null
+          status?: string
+          resolved_at?: string | null
+          dismissed_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      alert_dedup: {
+        Row: {
+          id: string
+          alert_key: string
+          alert_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          alert_key: string
+          alert_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          alert_key?: string
+          alert_id?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
