@@ -40,28 +40,61 @@ setSelectedAdAccount: setSelectedAdAccountId,
 
 ---
 
+### 3. Runtime Error: useAdAccountFilter Context Provider
+**File**: `src/components/layout/DashboardLayout.tsx`
+**Lines**: 306-316
+**Problem**: `AdAccountFilter` component was being rendered even when not wrapped by `AdAccountFilterProvider`, causing "must be used within AdAccountFilterProvider" error
+
+**Fix**: Added conditional rendering:
+```typescript
+{/* Ad Account Filter - Desktop */}
+{currentWorkspace && (
+  <div className="hidden lg:block flex-1">
+    <AdAccountFilter />
+  </div>
+)}
+
+{/* Ad Account Filter - Mobile */}
+{currentWorkspace && (
+  <div className="lg:hidden mt-4">
+    <AdAccountFilter />
+  </div>
+)}
+```
+
+**Reason**: The `AdAccountFilterProvider` only wraps `DashboardLayout` when `currentWorkspace` exists (see `src/app/(dashboard)/layout.tsx`). But `DashboardLayout` was always trying to render `AdAccountFilter`, which uses the `useAdAccountFilter` hook. This caused a context error when the provider wasn't present.
+
+---
+
 ## Build Status
 
 ✅ **TypeScript compilation**: PASSED  
 ✅ **Build optimization**: PASSED  
-✅ **Static generation**: PASSED (61 pages)
+✅ **Static generation**: PASSED (61 pages)  
+✅ **Runtime context error**: FIXED
+
+## Deployment History
+
+### Commit 1: dd256ca
+- Fixed TypeScript errors in sync route and filter provider
+- Status: ❌ Failed (Runtime error in production)
+
+### Commit 2: 326d957 (CURRENT)
+- Fixed context provider runtime error
+- Status: ⏳ Deploying to Vercel
+
+---
 
 ## Next Steps
 
 1. ✅ Commit and push fixes
 2. ⏳ Wait for Vercel deployment to complete
 3. 🔄 Test in production:
+   - Verify app loads without errors
    - Run "Sync All" to populate business managers
    - Verify filter dropdowns appear in dashboard
    - Test 2-level filtering (Business Portfolio → Ad Account)
    - Verify all dashboard pages respect the filter
-
-## Deployment Info
-
-- **Commit**: dd256ca
-- **Message**: "Fix TypeScript errors in Meta sync and filter provider"
-- **Branch**: main
-- **Push Status**: Successful
 
 ---
 
@@ -83,7 +116,8 @@ setSelectedAdAccount: setSelectedAdAccountId,
 - Added BM sync to Meta sync route
 - Links ad accounts to business managers
 - TypeScript errors fixed
-- Ready for deployment
+- Context provider error fixed
+- Ready for production testing
 
 ### 🔄 Next: Testing & Validation
 Once deployed, need to:
@@ -94,8 +128,28 @@ Once deployed, need to:
 
 ---
 
+## Technical Details
+
+### Context Provider Pattern
+```
+Layout Hierarchy:
+- ProtectedLayout (auth check)
+  └─ WorkspaceProvider
+     └─ DashboardContent
+        └─ if (currentWorkspace):
+           └─ AdAccountFilterProvider
+              └─ DashboardLayout
+                 └─ if (currentWorkspace):
+                    └─ AdAccountFilter (uses hook)
+```
+
+The fix ensures `AdAccountFilter` only renders when inside the provider context.
+
+---
+
 ## Notes
 
 - Redis connection warnings during build are expected (Redis is optional for caching)
-- Build completes successfully in ~12-13 seconds
+- Build completes successfully in ~13-14 seconds
 - All 61 pages generated without errors
+- Filter will only show when user has selected a workspace
