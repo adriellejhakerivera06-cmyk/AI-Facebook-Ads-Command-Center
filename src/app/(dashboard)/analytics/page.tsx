@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { useWorkspace } from '@/providers/WorkspaceProvider'
+import { useAdAccountFilter } from '@/providers/AdAccountFilterProvider'
 import {
   ChevronRight, ChevronDown, Search, Columns3, Save, Loader as Loader2,
   RefreshCw, Megaphone, Layers, FileText, DollarSign, Eye, MousePointerClick,
@@ -64,6 +65,7 @@ const AGGREGATION_OPTIONS: { value: TimeAggregation; label: string }[] = [
 
 export default function AnalyticsPage() {
   const { currentWorkspace } = useWorkspace()
+  const { selectedAdAccountId } = useAdAccountFilter()
 
   // Metrics data
   const [metrics, setMetrics] = useState<any>(null)
@@ -124,7 +126,7 @@ export default function AnalyticsPage() {
       loadMetrics()
       loadData()
     }
-  }, [currentWorkspace, startDate, endDate])
+  }, [currentWorkspace, startDate, endDate, selectedAdAccountId])
 
   const loadSavedViews = async () => {
     if (!currentWorkspace) return
@@ -148,6 +150,12 @@ export default function AnalyticsPage() {
         end_date: endDate,
         entity_type: 'campaign'
       })
+      
+      // Add ad account filter if selected
+      if (selectedAdAccountId) {
+        params.append('ad_account_id', selectedAdAccountId)
+      }
+      
       const response = await fetch(`/api/metrics?${params}`)
       const data = await response.json()
       if (response.ok) {
@@ -176,7 +184,14 @@ export default function AnalyticsPage() {
       const insightMap: Record<string, Insight> = {}
 
       for (const conn of connections || []) {
-        const { data: campaignList } = await fetch(`/api/meta/campaigns?connection_id=${conn.id}`).then(r => r.json())
+        const campaignParams = new URLSearchParams({ connection_id: conn.id })
+        
+        // Add ad account filter if selected
+        if (selectedAdAccountId) {
+          campaignParams.append('ad_account_id', selectedAdAccountId)
+        }
+        
+        const { data: campaignList } = await fetch(`/api/meta/campaigns?${campaignParams}`).then(r => r.json())
         if (campaignList) allCampaigns.push(...campaignList)
 
         const insightParams = new URLSearchParams({
@@ -185,6 +200,11 @@ export default function AnalyticsPage() {
           start_date: startDate,
           end_date: endDate
         })
+        
+        // Add ad account filter if selected
+        if (selectedAdAccountId) {
+          insightParams.append('ad_account_id', selectedAdAccountId)
+        }
 
         const { insights: campaignInsights } = await fetch(`/api/meta/insights?${insightParams}`).then(r => r.json())
         campaignInsights?.forEach((i: Insight) => {
