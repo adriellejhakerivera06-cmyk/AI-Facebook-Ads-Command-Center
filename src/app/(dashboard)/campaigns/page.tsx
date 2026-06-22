@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useWorkspace } from '@/providers/WorkspaceProvider'
+import { useAdAccountFilter } from '@/providers/AdAccountFilterProvider'
 import { Megaphone, RefreshCw, Search, ListFilter as Filter, MoveHorizontal as MoreHorizontal, Play, Pause, ChartBar as BarChart3, DollarSign, Eye, MousePointerClick, TrendingUp, TrendingDown, Clock, Calendar, ChevronDown, Loader as Loader2 } from 'lucide-react'
 
 type Campaign = {
@@ -37,6 +38,7 @@ type CampaignInsight = {
 
 export default function CampaignsPage() {
   const { currentWorkspace } = useWorkspace()
+  const { selectedAdAccountId } = useAdAccountFilter()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +48,7 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     fetchCampaigns()
-  }, [currentWorkspace])
+  }, [currentWorkspace, selectedAdAccountId])
 
   const fetchCampaigns = async () => {
     if (!currentWorkspace) return
@@ -65,9 +67,13 @@ export default function CampaignsPage() {
       const allCampaigns: Campaign[] = []
 
       for (const conn of connections || []) {
-        const { data, error } = await fetch(
-          `/api/meta/campaigns?connection_id=${conn.id}`
-        ).then(r => r.json())
+        // Build URL with optional ad account filter
+        let url = `/api/meta/campaigns?connection_id=${conn.id}`
+        if (selectedAdAccountId) {
+          url += `&ad_account_id=${selectedAdAccountId}`
+        }
+        
+        const { data, error } = await fetch(url).then(r => r.json())
 
         if (data) {
           allCampaigns.push(...data)

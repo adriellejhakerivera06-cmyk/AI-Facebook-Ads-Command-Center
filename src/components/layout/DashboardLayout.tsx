@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { LayoutDashboard, Megaphone, ChartBar as BarChart3, Settings, User, LogOut, Menu, X, Building2, ChevronDown, Plus, Sparkles, Activity, TrendingUp, ChartLine as LineChart, Bell, MessageSquare, FileText, Search } from 'lucide-react'
 import { NotificationBell } from './NotificationBell'
+import AdAccountFilter from '@/components/filters/AdAccountFilter'
 import { cn } from '@/lib/design-system'
 import type { LucideIcon } from 'lucide-react'
 
@@ -303,7 +304,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <div className="lg:pl-72">
         {/* Top bar */}
         <div className="sticky top-0 z-30 bg-slate-900/80 backdrop-blur-xl border-b border-slate-800 px-4 lg:px-8 py-4 shadow-lg">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
@@ -311,11 +312,19 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
               <Menu className="w-6 h-6" />
             </button>
             
-            <div className="hidden lg:block" />
+            {/* Ad Account Filter - Desktop */}
+            <div className="hidden lg:block flex-1">
+              <AdAccountFilter />
+            </div>
             
             <div className="flex items-center gap-3">
               <NotificationBell />
             </div>
+          </div>
+          
+          {/* Ad Account Filter - Mobile */}
+          <div className="lg:hidden mt-4">
+            <AdAccountFilter />
           </div>
         </div>
 

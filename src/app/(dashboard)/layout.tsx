@@ -1,10 +1,25 @@
 'use client'
 
 import { useAuth } from '@/providers/AuthProvider'
-import { WorkspaceProvider } from '@/providers/WorkspaceProvider'
+import { WorkspaceProvider, useWorkspace } from '@/providers/WorkspaceProvider'
+import { AdAccountFilterProvider } from '@/providers/AdAccountFilterProvider'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+
+function DashboardContent({ children }: { children: React.ReactNode }) {
+  const { currentWorkspace } = useWorkspace()
+  
+  if (!currentWorkspace) {
+    return <DashboardLayout>{children}</DashboardLayout>
+  }
+
+  return (
+    <AdAccountFilterProvider workspaceId={currentWorkspace.id}>
+      <DashboardLayout>{children}</DashboardLayout>
+    </AdAccountFilterProvider>
+  )
+}
 
 export default function ProtectedLayout({
   children,
@@ -34,7 +49,7 @@ export default function ProtectedLayout({
 
   return (
     <WorkspaceProvider>
-      <DashboardLayout>{children}</DashboardLayout>
+      <DashboardContent>{children}</DashboardContent>
     </WorkspaceProvider>
   )
 }
