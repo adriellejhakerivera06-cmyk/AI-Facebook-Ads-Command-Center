@@ -157,22 +157,71 @@ export async function POST(request: Request) {
       for (const bm of businessManagers) {
         try {
           console.log(`Fetching ad accounts for BM: ${bm.name} (${bm.id})`)
-          const bmAdAccountsData = await metaClient.request<{ data: any[] }>(`/${bm.id}/owned_ad_accounts`, {
-            params: {
-              fields: 'id,name,account_status,currency,timezone_name,amount_spent,balance'
-            }
-          })
           
-          if (bmAdAccountsData.data && bmAdAccountsData.data.length > 0) {
-            console.log(`  → Found ${bmAdAccountsData.data.length} ad accounts in ${bm.name}`)
+          // Try multiple endpoints to get BM's ad accounts
+          let bmAdAccounts: any[] = []
+          
+          // Method 1: Try owned_ad_accounts
+          try {
+            const ownedAccounts = await metaClient.request<{ data: any[] }>(`/${bm.id}/owned_ad_accounts`, {
+              params: {
+                fields: 'id,name,account_status,currency,timezone_name,amount_spent,balance'
+              }
+            })
+            if (ownedAccounts.data) {
+              console.log(`  → Method 1 (owned_ad_accounts): Found ${ownedAccounts.data.length} accounts`)
+              bmAdAccounts.push(...ownedAccounts.data)
+            }
+          } catch (method1Error: any) {
+            console.warn(`  → Method 1 failed: ${method1Error.message}`)
+          }
+          
+          // Method 2: Try client_ad_accounts (if method 1 failed or returned nothing)
+          if (bmAdAccounts.length === 0) {
+            try {
+              const clientAccounts = await metaClient.request<{ data: any[] }>(`/${bm.id}/client_ad_accounts`, {
+                params: {
+                  fields: 'id,name,account_status,currency,timezone_name,amount_spent,balance'
+                }
+              })
+              if (clientAccounts.data) {
+                console.log(`  → Method 2 (client_ad_accounts): Found ${clientAccounts.data.length} accounts`)
+                bmAdAccounts.push(...clientAccounts.data)
+              }
+            } catch (method2Error: any) {
+              console.warn(`  → Method 2 failed: ${method2Error.message}`)
+            }
+          }
+          
+          // Method 3: Try adaccounts (generic) as fallback
+          if (bmAdAccounts.length === 0) {
+            try {
+              const genericAccounts = await metaClient.request<{ data: any[] }>(`/${bm.id}/adaccounts`, {
+                params: {
+                  fields: 'id,name,account_status,currency,timezone_name,amount_spent,balance'
+                }
+              })
+              if (genericAccounts.data) {
+                console.log(`  → Method 3 (adaccounts): Found ${genericAccounts.data.length} accounts`)
+                bmAdAccounts.push(...genericAccounts.data)
+              }
+            } catch (method3Error: any) {
+              console.warn(`  → Method 3 failed: ${method3Error.message}`)
+            }
+          }
+          
+          if (bmAdAccounts.length > 0) {
+            console.log(`  ✅ Total found for ${bm.name}: ${bmAdAccounts.length} accounts`)
             // Add BM ID to each account
-            bmAdAccountsData.data.forEach(acc => {
+            bmAdAccounts.forEach(acc => {
               acc.business_manager_meta_id = bm.id
             })
-            allAdAccountsData.push(...bmAdAccountsData.data)
+            allAdAccountsData.push(...bmAdAccounts)
+          } else {
+            console.warn(`  ⚠️ No ad accounts found for ${bm.name} using any method`)
           }
         } catch (bmError: any) {
-          console.warn(`Failed to fetch ad accounts for BM ${bm.name}:`, bmError.message)
+          console.error(`  ❌ Failed to fetch ad accounts for BM ${bm.name}:`, bmError.message)
         }
       }
       
