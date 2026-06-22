@@ -128,8 +128,15 @@ export async function POST(request: Request) {
     let totalAds = 0
     let processedRecords = 0
 
-    // Process ad accounts with timeout protection (limit to first 5 to prevent timeout)
-    const accountsToProcess = adAccountIds.slice(0, 5)
+    // Sort accounts: active (status 1) first, then inactive
+    const sortedAccounts = [...adAccountIds].sort((a, b) => {
+      // You can add account_status sorting here if we store it
+      return 0 // For now, keep original order
+    })
+
+    // Process ad accounts with timeout protection
+    // Increase limit to 10 to have better chance of catching active accounts
+    const accountsToProcess = sortedAccounts.slice(0, 10)
     console.log(`Processing ${accountsToProcess.length} of ${adAccountIds.length} ad accounts`)
 
     for (const account of accountsToProcess) {
@@ -174,6 +181,10 @@ export async function POST(request: Request) {
           totalBatches: batchResults.length,
           errors: batchResults.filter(r => r instanceof Error).length,
           successful: batchResults.filter(r => !(r instanceof Error)).length,
+          // Check if any batch has data
+          hasCampaigns: batchResults[0] && !(batchResults[0] instanceof Error) && (batchResults[0] as any).data?.length > 0,
+          hasAdsets: batchResults[1] && !(batchResults[1] instanceof Error) && (batchResults[1] as any).data?.length > 0,
+          hasAds: batchResults[2] && !(batchResults[2] instanceof Error) && (batchResults[2] as any).data?.length > 0,
         })
 
         // Track which batch result corresponds to which entity type
